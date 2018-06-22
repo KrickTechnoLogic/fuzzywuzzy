@@ -11,6 +11,9 @@ except ImportError:
         warnings.warn('Using slow pure-python SequenceMatcher. Install python-Levenshtein to remove this warning')
     from difflib import SequenceMatcher
 
+##edited
+import difflib
+
 from . import utils
 
 
@@ -43,7 +46,10 @@ def partial_ratio(s1, s2):
         shorter = s2
         longer = s1
 
-    m = SequenceMatcher(None, shorter, longer)
+
+    ##edited: use difflib SequenceMatcher to get blocks
+    m = difflib.SequenceMatcher(None, shorter, longer)
+    #m = SequenceMatcher(None, shorter, longer)
     blocks = m.get_matching_blocks()
 
     # each block represents a sequence of matching characters in a string
@@ -55,6 +61,20 @@ def partial_ratio(s1, s2):
     scores = []
     for block in blocks:
         long_start = block[1] - block[0] if (block[1] - block[0]) > 0 else 0
+        long_end = long_start + len(shorter)
+        long_substr = longer[long_start:long_end]
+
+        m2 = SequenceMatcher(None, shorter, long_substr)
+        r = m2.ratio()
+        if r > .995:
+            return 100
+        else:
+            scores.append(r)
+    ##edited: SequenceMatcher is non-commutative, add arguments in reverse order to get more blocks
+    m_rev = difflib.SequenceMatcher(None, longer, shorter)
+    blocks_rev = m_rev.get_matching_blocks()
+    for block in blocks_rev:
+        long_start = block[0] - block[1] if (block[0] - block[1]) > 0 else 0
         long_end = long_start + len(shorter)
         long_substr = longer[long_start:long_end]
 
